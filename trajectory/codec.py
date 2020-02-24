@@ -3,7 +3,7 @@ import six
 import math
 
 
-class PolylineCodec(object):
+class TrajectoryCodec(object):
     def _pcitr(self, iterable):
         return six.moves.zip(iterable, itertools.islice(iterable, 1, None))
 
@@ -19,7 +19,7 @@ class PolylineCodec(object):
         coord = coord if coord >= 0 else ~coord
 
         while coord >= 0x20:
-            output.write(six.unichr((0x20 | (coord & 0x1f)) + 63))
+            output.write(six.unichr((0x20 | (coord & 0x1F)) + 63))
             coord >>= 5
 
         output.write(six.unichr(coord + 63))
@@ -30,38 +30,43 @@ class PolylineCodec(object):
         while byte is None or byte >= 0x20:
             byte = ord(value[index]) - 63
             index += 1
-            result |= (byte & 0x1f) << shift
+            result |= (byte & 0x1F) << shift
             shift += 5
-            comp = result & 1
 
-        return ~(result >> 1) if comp else (result >> 1), index
+        return ~(result >> 1) if result & 1 else (result >> 1), index
 
-    def decode(self, expression, precision=5, geojson=False):
-        coordinates, index, lat, lng, length, factor = [], 0, 0, 0, len(expression), float(10 ** precision)
+    def decode(self, expression, precision=5):
+        traj, index, lat, lng, time, length, factor = (
+            [],
+            0,
+            0,
+            0,
+            0,
+            len(expression),
+            float(10 ** precision),
+        )
 
         while index < length:
             lat_change, index = self._trans(expression, index)
             lng_change, index = self._trans(expression, index)
+            time_change, index = self._trans(expression, index)
             lat += lat_change
             lng += lng_change
-            coordinates.append((lat / factor, lng / factor))
+            time += time_change
+            traj.append((lat / factor, lng / factor, time / factor))
 
-        if geojson is True:
-            coordinates = [t[::-1] for t in coordinates]
+        return traj
 
-        return coordinates
-
-    def encode(self, coordinates, precision=5, geojson=False):
-        if geojson is True:
-            coordinates = [t[::-1] for t in coordinates]
-
+    def encode(self, traj, precision=5):
         output, factor = six.StringIO(), int(10 ** precision)
 
-        self._write(output, coordinates[0][0], 0, factor)
-        self._write(output, coordinates[0][1], 0, factor)
+        self._write(output, traj[0][0], 0, factor)
+        self._write(output, traj[0][1], 0, factor)
+        self._write(output, traj[0][2], 0, factor)
 
-        for prev, curr in self._pcitr(coordinates):
+        for prev, curr in self._pcitr(traj):
             self._write(output, curr[0], prev[0], factor)
             self._write(output, curr[1], prev[1], factor)
+            self._write(output, curr[2], prev[2], factor)
 
         return output.getvalue()

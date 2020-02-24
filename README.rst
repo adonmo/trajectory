@@ -1,24 +1,30 @@
-polyline
-========
+.. image:: https://github.com/adonmo/trajectory/workflows/Tests/badge.svg
+   :target: https://github.com/adonmo/trajectory/actions
+   :alt: Test Status
 
-.. image:: http://img.shields.io/travis/hicsail/polyline.svg?style=flat
-    :target: https://travis-ci.org/hicsail/polyline
+.. image:: https://img.shields.io/pypi/dm/trajectory.svg
+   :target: https://pypistats.org/packages/trajectory
+   :alt: PyPI downloads
 
-.. image:: http://img.shields.io/pypi/v/polyline.svg?style=flat
-    :target: https://pypi.python.org/pypi/polyline/
+.. image:: https://img.shields.io/github/license/adonmo/trajectory.svg
+   :target: https://github.com/adonmo/trajectory/blob/master/LICENSE
+   :alt: MIT License
 
-``polyline`` is a Python implementation of Google's Encoded Polyline Algorithm
-Format (http://goo.gl/PvXf8Y). It is essentially a port of
-https://github.com/mapbox/polyline built with Python 2 and 3 support in mind.
+trajectory
+============
+
+``trajectory`` is a library for lossy compression of trajectory data based on Google's Encoded Polyline Algorithm Format (http://goo.gl/PvXf8Y). It is heavily based on (in fact forked from) https://github.com/hicsail/polyline.
 
 Installation
 ============
 
-``polyline`` can be installed using ``pip`` or ``easy_install``::
+``trajectory`` can be installed using ``pip`` or ``easy_install``
 
-    $ pip install polyline
+.. code-block:: sh
+
+    $ pip install trajectory
     or
-    $ easy_install polyline
+    $ easy_install trajectory
 
 API Documentation
 =================
@@ -26,27 +32,66 @@ API Documentation
 Encoding
 --------
 
-To get the encoded polyline representation of a given set of (lat, lon) coordinates::
+To serialize a trajectory (set of (lat, lon, unix time in seconds) tuples)
 
-    import polyline
-    polyline.encode([(38.5, -120.2), (40.7, -120.9), (43.2, -126.4)], 5)
+.. code-block:: py
 
-This should return ``_p~iF~ps|U_ulL~ugC_hgN~eq`@``.
+    import trajectory
+    trajectory.encode([
+        (38.500, -120.200, 1582482601),
+        (40.700, -120.950, 1582482611),
+        (43.252, -126.453, 1582482627)
+    ], 5)
+
+This should return ``_p~iF~ps|U_ynpijgz~G_ulLnnqC_c`|@_mqNvxq`@__t`B``.
 
 You can set the required precision with the optional ``precision`` parameter. The default value is 5.
-
-You can encode (lon, lat) tuples by setting ``geojson=True``.
 
 Decoding
 --------
 
-To get a set of coordinates represented by a given encoded polyline string::
+To deserialize a trajectory (set of (lat, lon, unix time in seconds) tuples) represented by an encoded string
 
-    import polyline
-    polyline.decode('u{~vFvyys@fS]', 5)
+.. code-block:: py
 
-This should return ``[(40.63179, -8.65708), (40.62855, -8.65693)]`` in (lat, lon) order.
+    import trajectory
+    trajectory.decode('_p~iF~ps|U_ynpijgz~G_ulLnnqC_c`|@_mqNvxq`@__t`B', 5)
+
+This should return the following:
+
+.. code-block:: py
+
+    [
+        (38.500, -120.200, 1582482601),
+        (40.700, -120.950, 1582482611),
+        (43.252, -126.453, 1582482627)
+    ]
 
 You can set the required precision with the optional ``precision`` parameter. The default value is 5.
 
-You can decode into (lon, lat) tuples by setting ``geojson=True``.
+
+Development
+===========
+
+Setup Dependencies
+------------------
+
+.. code-block:: sh
+
+    $ poetry install
+
+Running Tests
+-------------
+
+.. code-block:: sh
+
+    $ poetry run pytest
+
+Contributing
+------------
+
+Issues and pull requests are welcome.
+
+* For proposing new features/improvements or reporting bugs, `create an issue <https://github.com/adonmo/trajectory/issues/new/choose>`_.
+* Check `open issues <https://github.com/adonmo/trajectory/issues>`_ for viewing existing ideas, verify if it is already proposed/being worked upon.
+* When implementing new features make sure to add relavant tests and documentation before sending pull requests.
